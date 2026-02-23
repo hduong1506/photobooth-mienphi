@@ -4,299 +4,367 @@
 <meta charset="UTF-8">
 <title>Hello Kitty Photobooth</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@500&display=swap" rel="stylesheet">
-
 <style>
 
 body{
+
 margin:0;
-font-family:Quicksand;
-background:linear-gradient(#ffd6ec,#ffffff);
+background:linear-gradient(#ffd6ec,#ffc0e6);
+font-family:sans-serif;
 text-align:center;
+color:#ff1493;
+
+overflow-x:hidden;
+
 }
+
+
+/* snow */
+
+.snow{
+
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+
+}
+
+.snow span{
+
+position:absolute;
+color:white;
+animation:snow 10s linear infinite;
+
+}
+
+@keyframes snow{
+
+0%{transform:translateY(-10px)}
+100%{transform:translateY(100vh)}
+
+}
+
 
 h1{
-font-family:Pacifico;
-color:#ff4da6;
-font-size:50px;
+
+font-size:40px;
+margin:20px;
+
 }
+
 
 video{
-width:260px;
+
+width:300px;
 border-radius:20px;
-box-shadow:0 0 20px pink;
+border:6px solid white;
+transform:scaleX(-1);
+
 }
+
+
+button{
+
+background:#ff1493;
+color:white;
+border:none;
+padding:12px 20px;
+margin:10px;
+border-radius:10px;
+font-size:16px;
+cursor:pointer;
+
+}
+
 
 #strip{
-background:white;
-width:280px;
+
 margin:auto;
-padding:10px;
+background:white;
+padding:15px;
+width:240px;
 border-radius:20px;
-box-shadow:0 0 20px hotpink;
+
 }
 
-.slot{
-width:260px;
-height:180px;
+
+.photo{
+
+width:200px;
+height:150px;
 background:#eee;
 margin:10px auto;
 border-radius:10px;
-position:relative;
-overflow:hidden;
+background-size:cover;
+background-position:center;
+
 }
 
-.slot img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.delete{
-position:absolute;
-top:5px;
-right:5px;
-background:red;
-color:white;
-border:none;
-border-radius:50%;
-cursor:pointer;
-}
-
-.upload{
-position:absolute;
-bottom:5px;
-left:5px;
-}
-
-button{
-background:linear-gradient(45deg,#ff4da6,#ff99cc);
-border:none;
-padding:10px 20px;
-margin:5px;
-color:white;
-border-radius:20px;
-cursor:pointer;
-}
 
 #frames{
-display:flex;
-flex-wrap:wrap;
-justify-content:center;
+
+margin-top:20px;
+
 }
 
-.frame{
-width:70px;
-height:140px;
+
+.frameBtn{
+
+width:60px;
+height:120px;
 margin:5px;
-border:3px solid pink;
 border-radius:10px;
 cursor:pointer;
+border:3px solid white;
+
 }
 
+
 footer{
-color:#ff4da6;
-padding:20px;
+
+margin:40px;
+font-size:18px;
+
 }
 
 </style>
-
 </head>
+
 
 <body>
 
-<h1>Hello Kitty Photobooth</h1>
+
+<div class="snow" id="snow"></div>
+
+
+<h1>🎀 Hello Kitty Photobooth 🎀</h1>
+
 
 <video id="video" autoplay></video>
 
 <br>
 
 <button onclick="capture()">Chụp</button>
-<button onclick="save()">Lưu ảnh</button>
 
-<br><br>
+<button onclick="download()">Tải ảnh</button>
 
-<div id="strip"></div>
 
-<h3>Chọn khung</h3>
+<div id="strip">
+
+<div class="photo" id="p0"></div>
+<div class="photo" id="p1"></div>
+<div class="photo" id="p2"></div>
+<div class="photo" id="p3"></div>
+
+</div>
+
+
+<h2>Chọn khung</h2>
 
 <div id="frames"></div>
 
+
+<canvas id="canvas" width="240" height="720" hidden></canvas>
+
+
 <footer>
+
 được tạo bởi hduowgg
+
 </footer>
 
-<canvas id="canvas" style="display:none"></canvas>
 
 <script>
 
-let video=document.getElementById("video")
+
+/* snow */
+
+
+for(let i=0;i<50;i++){
+
+let s=document.createElement("span");
+
+s.innerHTML="❄";
+
+s.style.left=Math.random()*100+"%";
+
+s.style.animationDuration=5+Math.random()*5+"s";
+
+s.style.fontSize=10+Math.random()*20+"px";
+
+snow.appendChild(s);
+
+}
+
+
+/* camera */
+
+
+let video=document.getElementById("video");
+
 
 navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>video.srcObject=stream)
 
-let strip=document.getElementById("strip")
+.then(stream=>video.srcObject=stream);
 
-let images=[null,null,null,null]
 
-function render(){
 
-strip.innerHTML=""
+let photos=[null,null,null,null];
 
-for(let i=0;i<4;i++){
+let index=0;
 
-let slot=document.createElement("div")
-slot.className="slot"
 
-if(images[i]){
-
-let img=document.createElement("img")
-img.src=images[i]
-slot.appendChild(img)
-
-let del=document.createElement("button")
-del.innerHTML="x"
-del.className="delete"
-
-del.onclick=()=>{
-
-images[i]=null
-render()
-
-}
-
-slot.appendChild(del)
-
-}
-
-let upload=document.createElement("input")
-upload.type="file"
-upload.className="upload"
-
-upload.onchange=e=>{
-
-let file=e.target.files[0]
-
-let reader=new FileReader()
-
-reader.onload=()=>{
-
-images[i]=reader.result
-render()
-
-}
-
-reader.readAsDataURL(file)
-
-}
-
-slot.appendChild(upload)
-
-strip.appendChild(slot)
-
-}
-
-}
-
-render()
 
 function capture(){
 
-let canvas=document.getElementById("canvas")
-canvas.width=260
-canvas.height=180
 
-let ctx=canvas.getContext("2d")
+let c=document.createElement("canvas");
 
-ctx.drawImage(video,0,0)
+c.width=200;
 
-let index=images.findIndex(x=>x==null)
+c.height=150;
 
-if(index!=-1){
 
-images[index]=canvas.toDataURL()
-render()
+let ctx=c.getContext("2d");
 
-}
+ctx.scale(-1,1);
 
-}
+ctx.drawImage(video,-200,0,200,150);
 
-let frames=document.getElementById("frames")
 
-let selectedFrame=null
+let url=c.toDataURL();
 
-for(let i=0;i<30;i++){
 
-let c=document.createElement("canvas")
+photos[index]=url;
 
-c.width=70
-c.height=140
 
-let ctx=c.getContext("2d")
+document.getElementById("p"+index).style.backgroundImage="url("+url+")";
 
-ctx.strokeStyle=`hsl(${i*12},80%,70%)`
 
-ctx.lineWidth=6
+index++;
 
-ctx.strokeRect(0,0,70,140)
+if(index>3) index=0;
 
-c.className="frame"
-
-c.onclick=()=>{
-
-selectedFrame=c
-alert("Đã chọn khung")
 
 }
 
-frames.appendChild(c)
+
+
+/* frame */
+
+
+let frameColor="#ff1493";
+
+
+let framesDiv=document.getElementById("frames");
+
+
+let colors=[
+
+"#ff1493","#ff69b4","#ff85c1","#ffb6c1",
+
+"#ffc0cb","#ff99cc","#ff66cc","#ff33cc",
+
+"#ff00cc","#ff3399","#ff0066","#ff6699",
+
+"#ff3366","#ff0033","#ff9999","#ffcccc",
+
+"#ff66ff","#ff33ff","#cc00cc","#cc66cc",
+
+"#cc33cc","#cc0099","#ff6699","#ff3399",
+
+"#ff1493","#ff85c1","#ff69b4","#ffc0cb",
+
+"#ff99cc","#ff66cc"
+
+];
+
+
+colors.forEach(color=>{
+
+
+let f=document.createElement("div");
+
+f.className="frameBtn";
+
+f.style.background=color;
+
+
+f.onclick=()=>{
+
+frameColor=color;
+
+};
+
+
+framesDiv.appendChild(f);
+
+
+});
+
+
+
+/* download */
+
+
+function download(){
+
+
+let canvas=document.getElementById("canvas");
+
+let ctx=canvas.getContext("2d");
+
+
+ctx.fillStyle="white";
+
+ctx.fillRect(0,0,240,720);
+
+
+ctx.strokeStyle=frameColor;
+
+ctx.lineWidth=15;
+
+ctx.strokeRect(0,0,240,720);
+
+
+let y=20;
+
+
+for(let i=0;i<4;i++){
+
+if(photos[i]){
+
+let img=new Image();
+
+img.src=photos[i];
+
+ctx.drawImage(img,20,y,200,150);
 
 }
 
-function save(){
-
-let canvas=document.createElement("canvas")
-
-canvas.width=280
-canvas.height=800
-
-let ctx=canvas.getContext("2d")
-
-ctx.fillStyle="white"
-
-ctx.fillRect(0,0,canvas.width,canvas.height)
-
-images.forEach((src,i)=>{
-
-if(src){
-
-let img=new Image()
-
-img.src=src
-
-ctx.drawImage(img,10,10+i*190,260,180)
+y+=170;
 
 }
 
-})
 
-if(selectedFrame){
+let link=document.createElement("a");
 
-ctx.drawImage(selectedFrame,0,0,280,800)
+link.download="photobooth.png";
 
-}
+link.href=canvas.toDataURL();
 
-let link=document.createElement("a")
+link.click();
 
-link.download="photobooth.png"
-
-link.href=canvas.toDataURL()
-
-link.click()
 
 }
+
+
 
 </script>
+
 
 </body>
 </html>
